@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 fantoccini = "0.13.1"
+tokio = { version = "0.2", features = ["full"] }
+
