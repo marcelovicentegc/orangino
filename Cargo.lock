@@ -504,7 +504,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "orange"
+name = "orangino"
 version = "0.1.0"
 dependencies = [
  "dotenv",
