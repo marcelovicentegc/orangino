@@ -1,23 +1,31 @@
-use fantoccini::{Client, Locator};
+extern crate dotenv;
 
-// let's set up the sequence of steps we want the browser to take
+use dotenv::dotenv;
+use serde_json::Value;
+use std::env;
+
 #[tokio::main]
-async fn main() -> Result<(), fantoccini::error::CmdError> {
-    let mut c = Client::new("http://localhost:4444").await.expect("failed to connect to WebDriver");
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dotenv().ok();
 
-    // first, go to the Wikipedia page for Foobar
-    c.goto("https://en.wikipedia.org/wiki/Foobar").await?;
-    let url = c.current_url().await?;
-    assert_eq!(url.as_ref(), "https://en.wikipedia.org/wiki/Foobar");
+    let tangerino_url = format!(
+        "https://app.tangerino.com.br/Tangerino/ws/fingerprintWS/funcionario/empregador/{}/pin/{}",
+        &env::var("EMPLOYER_CODE").unwrap(),
+        &env::var("PIN").unwrap()
+    );
 
-    // click "Foo (disambiguation)"
-    c.find(Locator::Css(".mw-disambig")).await?.click().await?;
+    let resp = reqwest::get(&tangerino_url).await?;
 
-    // click "Foo Lake"
-    c.find(Locator::LinkText("Foo Lake")).await?.click().await?;
+    if resp.status().is_success() {
+        println!("success!");
+    } else if resp.status().is_server_error() {
+        println!("server error!");
+    } else {
+        println!("Something else happened. Status: {:?}", resp.status());
+    }
 
-    let url = c.current_url().await?;
-    assert_eq!(url.as_ref(), "https://en.wikipedia.org/wiki/Foo_Lake");
+    let parsed_resp: Value = serde_json::from_str(&resp.text().await?)?;
 
-    c.close().await
+    println!("{:#?}", parsed_resp["status"]);
+    Ok(())
 }
