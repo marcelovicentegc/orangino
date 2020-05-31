@@ -4,6 +4,7 @@ use chrono::NaiveDateTime;
 use console::{style, Emoji};
 use dotenv::dotenv;
 use pyo3::prelude::*;
+use randua;
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -40,6 +41,9 @@ struct CheckUserResp {
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 struct SyncResp {
+    // Possible values are: NOVO_PONTO_ABERTO,
+    // ULTIMO_PONTO_FECHADO_NOVO_ABERTO and
+    // NEGADO_FORA_HORARIO_PERMITIDO
     tipoRetornoRegistroApontamentoEnum: String,
     mensagem: String,
     statusPonto: i32,
@@ -110,7 +114,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let dt = NaiveDateTime::parse_from_str(raw_dt, "%Y-%m-%d %H:%M:%S")?;
                     println!("dt: {}", dt);
                     let punch_in_date = dt.format("%d/%m/%y %H:%M:%S").to_string();
-                    let punch_payload = format!("{{\"horaInicio\": \"{}\",\"deviceId\": null,\"online\": \"true\",\"codigoEmpregador\": \"{}\",\"pin\": \"{}\",\"horaFim\": \"\",\"tipo\": \"WEB\",\"foto\": \"\",\"intervalo\": \"\",\"validFingerprint\": false,\"versao\": \"registra-ponto-fingerprint\",\"plataforma\": \"WEB\",\"funcionarioid\": {},\"idAtividade\": 1,\"latitude\": null,\"longitude\": null}}",
+                    let punch_payload = format!("{{\"horaInicio\": \"{}\",\"deviceId\": null,\"online\": \"true\",\"codigoEmpregador\": \"{}\",\"pin\": \"{}\",\"horaFim\": \"\",\"tipo\": \"WEB\",\"foto\": \"\",\"intervalo\": \"\",\"validFingerprint\": false,\"versao\": \"registra-ponto-fingerprint\",\"plataforma\": \"WEB\",\"funcionarioid\": {},\"idAtividade\": 6,\"latitude\": null,\"longitude\": null}}",
                         &punch_in_date, &EMPLOYER_CODE, &PIN, employee_id
                     );
 
@@ -131,6 +135,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         )
                         .unwrap(),
                     );
+                    headers.insert(
+                        "origin",
+                        HeaderValue::from_str("https://app.tangerino.com.br").unwrap(),
+                    );
+                    headers.insert(
+                        "referer", 
+                        HeaderValue::from_str("https://app.tangerino.com.br/Tangerino/?wicket:interface=wicket-0:2:loginForm:baterPonto::ILinkListener::").unwrap()
+                    );
+                    headers.insert("sec-fetch-dest", HeaderValue::from_str("empty").unwrap());
+                    headers.insert("sec-fetch-mode", HeaderValue::from_str("cors").unwrap());
+                    headers.insert(
+                        "sec-fetch-site",
+                        HeaderValue::from_str("same-origin").unwrap(),
+                    );
+                    headers.insert(
+                        "x-requested-with",
+                        HeaderValue::from_str("XMLHttpRequest").unwrap(),
+                    );
+                    headers.insert(
+                        "user-agent",
+                        HeaderValue::from_str(&randua::new().chrome().desktop().to_string())
+                            .unwrap(),
+                    );
 
                     assert!(headers.contains_key("empregador"));
                     assert!(headers.contains_key("funcionarioid"));
@@ -143,6 +170,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         LINK
                     );
 
+                    println!("HEADERS: {:?}", headers);
+                    println!("BODY: {:?}", punch_payload);
+
                     let sync_resp = client
                         .post(sync_punch_url)
                         .headers(headers)
@@ -150,18 +180,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .send()
                         .await?;
 
+                    println!("RESPONSE HEADERS: {:?}", sync_resp);
+
                     if sync_resp.status().is_success() {
                         let parsed_sync_resp: SyncResp =
                             serde_json::from_str(&sync_resp.text().await?)?;
-
                         if parsed_sync_resp.sucesso == false {
                             println!(
-                                "{}",
+                                "Punch record type: {}",
                                 parsed_sync_resp
                                     .tipoRetornoRegistroApontamentoEnum
                                     .replace("_", " ")
                             );
-                            println!("{}", parsed_sync_resp.mensagem);
+                            println!("Message: {}", parsed_sync_resp.mensagem);
                         } else {
                             let gil = Python::acquire_gil();
                             let py = gil.python();
@@ -170,11 +201,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 style("[4/4]").bold().dim(),
                                 TAKING_NOTE
                             );
-                            publish_to_slack(py).map_err(|e| {
-                                // We can't display Python exceptions via std::fmt::Display,
-                                // so print the error here manually.
-                                e.print_and_set_sys_last_vars(py);
-                            });
+
+                            if parsed_sync_resp.tipoRetornoRegistroApontamentoEnum
+                                == "NOVO_PONTO_ABERTO"
+                            {
+                                publish_to_slack(py, true).map_err(|e| {
+                                    e.print_and_set_sys_last_vars(py);
+                                });
+                            } else if parsed_sync_resp.tipoRetornoRegistroApontamentoEnum
+                                == "ULTIMO_PONTO_FECHADO_NOVO_ABERTO"
+                            {
+                                publish_to_slack(py, false).map_err(|e| {
+                                    e.print_and_set_sys_last_vars(py);
+                                });
+                            }
                         }
                     } else if sync_resp.status().is_server_error() {
                         println!("Failed to syncrhonize the punch record");
@@ -205,7 +245,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn publish_to_slack(py: Python) -> PyResult<()> {
+fn publish_to_slack(py: Python, greet: bool) -> PyResult<()> {
     let slack_client = PyModule::from_code(
         py,
         r#"
@@ -214,15 +254,20 @@ from dotenv import load_dotenv
 from slack import WebClient
 from slack.errors import SlackApiError
             
-def publish():
+def publish(greet):
     load_dotenv()
     client = WebClient(token=os.environ['SLACK_API_TOKEN'])   
+
+    if greet:
+        message = os.environ['GREETING_MESSAGE']
+    else:
+        message = os.environ['GOODBYE_MESSAGE']
 
     try:
         response = client.chat_postMessage(
             channel=os.environ['SLACK_CHANNEL'],
-            text=os.environ['GREETING_MESSAGE'])
-        assert response["message"]["text"] == os.environ['GREETING_MESSAGE']
+            text=message)
+        assert response["message"]["text"] == message
         return f"Published: {response['message']['text']}"
     except SlackApiError as error:    
         # You will get a SlackApiError if "ok" is False
@@ -234,7 +279,7 @@ def publish():
         "slack_client",
     )?;
 
-    let publish_result: String = slack_client.call0("publish")?.extract()?;
+    let publish_result: String = slack_client.call1("publish", (greet,))?.extract()?;
     println!("{}", publish_result);
 
     Ok(())
