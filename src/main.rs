@@ -7,6 +7,7 @@ use pyo3::prelude::*;
 use randua;
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::collections::HashMap;
 use std::env;
 
@@ -110,13 +111,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .funcionario
                         .selectedDataInicio
                         .replace("T", " ");
-                    println!("raw_dt: {}", raw_dt);
                     let dt = NaiveDateTime::parse_from_str(raw_dt, "%Y-%m-%d %H:%M:%S")?;
-                    println!("dt: {}", dt);
-                    let punch_in_date = dt.format("%d/%m/%y %H:%M:%S").to_string();
-                    let punch_payload = format!("{{\"horaInicio\": \"{}\",\"deviceId\": null,\"online\": \"true\",\"codigoEmpregador\": \"{}\",\"pin\": \"{}\",\"horaFim\": \"\",\"tipo\": \"WEB\",\"foto\": \"\",\"intervalo\": \"\",\"validFingerprint\": false,\"versao\": \"registra-ponto-fingerprint\",\"plataforma\": \"WEB\",\"funcionarioid\": {},\"idAtividade\": 6,\"latitude\": null,\"longitude\": null}}",
-                        &punch_in_date, &EMPLOYER_CODE, &PIN, employee_id
-                    );
+                    let punch_in_date = dt.format("%d/%m/%Y %H:%M:%S").to_string();
+                    let punch_payload = json!({
+                        "horaInicio": &punch_in_date,
+                        "deviceId": null,
+                        "online": "true",
+                        "codigoEmpregador": &EMPLOYER_CODE,
+                        "pin": &PIN,
+                        "horaFim": "",
+                        "tipo": "WEB",
+                        "foto": "",
+                        "intervalo": "",
+                        "validFingerprint": false,
+                        "versao": "registra-ponto-fingerprint",
+                        "plataforma": "WEB",
+                        "funcionarioid": employee_id,
+                        "idAtividade": 6,
+                        "latitude": null,
+                        "longitude": null
+                    });
 
                     headers.insert(
                         reqwest::header::CONTENT_TYPE,
@@ -170,17 +184,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         LINK
                     );
 
-                    println!("HEADERS: {:?}", headers);
-                    println!("BODY: {:?}", punch_payload);
-
                     let sync_resp = client
                         .post(sync_punch_url)
                         .headers(headers)
-                        .body(punch_payload)
+                        .body(punch_payload.to_string())
                         .send()
                         .await?;
-
-                    println!("RESPONSE HEADERS: {:?}", sync_resp);
 
                     if sync_resp.status().is_success() {
                         let parsed_sync_resp: SyncResp =
