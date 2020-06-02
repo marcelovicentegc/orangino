@@ -1,18 +1,17 @@
-extern crate config;
-extern crate controllers;
-use config::emojis::{style, ASTRONAUT, LINK, PUNCH, TAKING_NOTE};
+mod config;
+mod controllers;
+use config::emojis::{ASTRONAUT, LINK, PUNCH, TAKING_NOTE};
 use config::keys::get_keys;
 use console::style;
 use controllers::slack::filter_and_publish;
 use controllers::users::{check_user, is_allowed, punch_record};
-use randua;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn start() -> Result<(), Box<dyn std::error::Error>> {
     let keys = get_keys();
     let EMPLOYER_CODE = keys[0];
     let PIN = keys[1];
-    let TANGERINO_BASIC_TOKEN = keys[3]
+    let TANGERINO_BASIC_TOKEN = keys[3];
 
     let check_user_status_url = format!(
         "https://app.tangerino.com.br/Tangerino/ws/fingerprintWS/funcionario/empregador/{}/pin/{}",
@@ -31,10 +30,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         style("[1/4]").bold().dim(),
         ASTRONAUT
     );
-    check_user(check_user_status_url).await?;
+    check_user(check_user_status_url);
 
     println!("{} {}Punching card...", style("[2/4]").bold().dim(), PUNCH);
-    is_allowed(is_allowed_url).await?;
+    is_allowed(is_allowed_url);
 
     println!(
         "{} {}Syncing punch record...",
@@ -42,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         LINK
     );
     punch_record(
-        punch_record_url,
+        punch_record_url.to_string(),
         parsed_check_user_resp: CheckUserResp,
         &EMPLOYER_CODE,
         &PIN,
@@ -54,7 +53,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         style("[4/4]").bold().dim(),
         TAKING_NOTE
     );
-    filter_and_publish().await?;
+    filter_and_publish();
 
     Ok(())
+}
+
+fn main() {
+    start();
 }
