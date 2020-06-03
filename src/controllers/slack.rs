@@ -7,17 +7,14 @@ pub async fn filter_and_publish(
     let gil = Python::acquire_gil();
     let py = gil.python();
 
-    if parsed_sync_resp.tipoRetornoRegistroApontamentoEnum == "NOVO_PONTO_ABERTO" {
-        publish_to_slack(py, true).map_err(|e| {
-            e.print_and_set_sys_last_vars(py);
-        });
-    } else if parsed_sync_resp.tipoRetornoRegistroApontamentoEnum
-        == "ULTIMO_PONTO_FECHADO_NOVO_ABERTO"
-    {
-        publish_to_slack(py, false).map_err(|e| {
-            e.print_and_set_sys_last_vars(py);
-        });
-    }
+    publish_to_slack(
+        py,
+        parsed_sync_resp.tipoRetornoRegistroApontamentoEnum == "NOVO_PONTO_ABERTO",
+    )
+    .map_err(|e| {
+        e.print_and_set_sys_last_vars(py);
+    });
+
     Ok(())
 }
 

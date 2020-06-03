@@ -1,6 +1,6 @@
 mod config;
 mod controllers;
-use config::emojis::{ASTRONAUT, LINK, PUNCH, TAKING_NOTE};
+use config::emojis::{ASTRONAUT, LOCK, PUNCH, TAKING_NOTE};
 use config::keys::get_keys;
 use console::style;
 use controllers::slack::filter_and_publish;
@@ -32,14 +32,14 @@ async fn start() -> Result<(), Box<dyn std::error::Error>> {
     );
     let parsed_check_user_resp = check_user(check_user_status_url).await.unwrap();
 
-    println!("{} {}Punching card...", style("[2/4]").bold().dim(), PUNCH);
+    println!(
+        "{} {}Checking user's permissions...",
+        style("[2/4]").bold().dim(),
+        LOCK
+    );
     is_allowed(is_allowed_url).await.unwrap();
 
-    println!(
-        "{} {}Syncing punch record...",
-        style("[3/4]").bold().dim(),
-        LINK
-    );
+    println!("{} {}Punching card...", style("[3/4]").bold().dim(), PUNCH);
     let parsed_punch_record_resp = punch_record(
         punch_record_url.to_string(),
         parsed_check_user_resp,
@@ -51,7 +51,7 @@ async fn start() -> Result<(), Box<dyn std::error::Error>> {
     .unwrap();
 
     println!(
-        "{} {}Publishing on Slack...",
+        "{} {}Publishing to Slack...",
         style("[4/4]").bold().dim(),
         TAKING_NOTE
     );
@@ -61,6 +61,5 @@ async fn start() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn main() {
-    #[allow(unused_must_use)]
     start();
 }

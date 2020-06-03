@@ -2,28 +2,34 @@ extern crate chrono;
 use super::types::{CheckUserResp, PunchResp, SyncResp};
 use chrono::NaiveDateTime;
 use reqwest::header::{HeaderMap, HeaderValue};
-use reqwest::StatusCode;
 use serde_json::json;
 use std::collections::HashMap;
-use std::io::{Error, ErrorKind};
+use std::process;
 
 pub async fn check_user(url: String) -> Result<CheckUserResp, Box<dyn std::error::Error>> {
     let resp = reqwest::get(&url).await?;
 
-    if resp.status().is_success() {
-        Error::new(ErrorKind::Interrupted, "Failed to get user status");
+    if resp.status().is_success() == false {
+        println!("Something went wrong");
+        process::exit(1);
     } else if resp.status().is_server_error() {
-        Error::new(ErrorKind::Interrupted, "Failed to get user status");
-    } else {
-        unknown_error(resp.status());
+        println!("Failed to get user status");
+        process::exit(1);
     }
-
     let parsed_resp: CheckUserResp = serde_json::from_str(&resp.text().await?)?;
+
+    let first_name: Vec<&str> = parsed_resp.funcionario.nome.split_whitespace().collect();
 
     // This means there is a valid user associated with the
     // provided employer and pin codes
     if parsed_resp.status == "SUCCESS" {
-        println!("Hi there, {}!", parsed_resp.funcionario.nome);
+        println!("Hi there, {}!", first_name[0]);
+    } else {
+        println!(
+            "Sorry, {}, something went wrong",
+            parsed_resp.funcionario.nome
+        );
+        process::exit(1);
     }
 
     Ok(parsed_resp)
@@ -42,12 +48,8 @@ pub async fn is_allowed(url: String) -> Result<bool, Box<dyn std::error::Error>>
             println!("You are allowed to proceed.");
         }
     } else if resp.status().is_server_error() {
-        Error::new(
-            ErrorKind::PermissionDenied,
-            "You are not allowed to proceed",
-        );
-    } else {
-        unknown_error(resp.status());
+        println!("You are not allowed to proceed");
+        process::exit(1);
     }
 
     Ok(true)
@@ -137,36 +139,31 @@ pub async fn punch_record(
         .send()
         .await?;
 
-    if resp.status().is_success() {
-
-        // Ok(return parsed_resp);
+    if resp.status().is_success() == false {
+        process::exit(1);
     } else if resp.status().is_server_error() {
-        Error::new(
-            ErrorKind::Interrupted,
-            "Failed to syncrhonize the punch record",
-        );
-    } else {
-        unknown_error(resp.status());
+        println!("Failed to punch the card");
+        process::exit(1);
     }
 
     let parsed_resp: SyncResp = serde_json::from_str(&resp.text().await?)?;
     if parsed_resp.sucesso == false {
-        Error::new(
-            ErrorKind::InvalidData,
+        println!(
+            "{}",
             parsed_resp
                 .tipoRetornoRegistroApontamentoEnum
-                .replace("_", " "),
+                .replace("_", " ")
         );
+        process::exit(1);
     }
-    Ok(parsed_resp)
-}
 
-fn unknown_error(status: StatusCode) -> Error {
-    return Error::new(
-        ErrorKind::Other,
-        format!(
-            "Something else happened while trying to get user status. Status: {:?}",
-            status
-        ),
-    );
+    if parsed_resp.tipoRetornoRegistroApontamentoEnum == "NOVO_PONTO_ABERTO" {
+        println!("Punched in successfully!");
+    }
+
+    if parsed_resp.tipoRetornoRegistroApontamentoEnum == "ULTIMO_PONTO_FECHADO_NOVO_ABERTO" {
+        println!("Punched out successfully");
+    }
+
+    Ok(parsed_resp)
 }
