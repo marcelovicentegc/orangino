@@ -6,12 +6,22 @@
 
 ---
 
-Orangino uses the Reqwest crate to interact with the [Tangerino API](https://app.tangerino.com.br/), while binding with Python to benefit from the [official Slack client](https://github.com/slackapi/python-slackclient) to publish messages to the channel of your choice.
+Orangino uses the Reqwest crate to interact with the [Tangerino](https://app.tangerino.com.br/) API, while binding with Python to benefit from the [official Slack client](https://github.com/slackapi/python-slackclient) to publish messages to the channel of your choice.
 
 ## Development directions ▶️
 
-1. You will need Python > 3.5 and Rust's nightly version installed.
-2. Create a `.env` file with your credentials, following the `.env.example` model:
+You will need:
+
+1. A [Slack app](https://api.slack.com/apps) installed on your workspace with the following features and permissions:
+	- Incoming webhooks
+	- Bot
+	    - `chat:write`
+	    - `incoming-webhook`
+            - `pins:read`
+	    - `pins:write`
+2. Python version 3.5 up installed.
+3. Rust's nightly version installed.
+4. A `.env` file with your credentials, following the `.env.example` model:
 
 ```s
 EMPLOYER_CODE=12345
@@ -24,5 +34,6 @@ GREETING_MESSAGE="Hello world!"
 GOODBYE_MESSAGE="Goodbye world!"
 ```
 
-3. Install dependencies: `pip install -r requirements.txt && cargo build`
-4. Make changes to the app and run in: `cargo run`
+5. To install the dependencies: `pip install -r requirements.txt && cargo build`
+
+You are good to go now, make changes to the app and run it: `cargo run`
