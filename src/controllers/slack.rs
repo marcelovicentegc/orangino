@@ -1,7 +1,6 @@
 use super::types::SyncResp;
 use pyo3::prelude::*;
 
-#[tokio::main]
 pub async fn filter_and_publish(
     parsed_sync_resp: SyncResp,
 ) -> Result<(), Box<dyn std::error::Error>> {

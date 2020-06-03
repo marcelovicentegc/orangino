@@ -7,29 +7,29 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::io::{Error, ErrorKind};
 
-#[tokio::main]
-pub async fn check_user(url: String) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn check_user(url: String) -> Result<CheckUserResp, Box<dyn std::error::Error>> {
     let resp = reqwest::get(&url).await?;
 
     if resp.status().is_success() {
-        let parsed_resp: CheckUserResp = serde_json::from_str(&resp.text().await?)?;
-
-        // This means there is a valid user associated with the
-        // provided employer and pin codes
-        if parsed_resp.status == "SUCCESS" {
-            println!("Hi there, {}!", parsed_resp.funcionario.nome);
-        }
+        Error::new(ErrorKind::Interrupted, "Failed to get user status");
     } else if resp.status().is_server_error() {
         Error::new(ErrorKind::Interrupted, "Failed to get user status");
     } else {
         unknown_error(resp.status());
     }
 
-    Ok(())
+    let parsed_resp: CheckUserResp = serde_json::from_str(&resp.text().await?)?;
+
+    // This means there is a valid user associated with the
+    // provided employer and pin codes
+    if parsed_resp.status == "SUCCESS" {
+        println!("Hi there, {}!", parsed_resp.funcionario.nome);
+    }
+
+    Ok(parsed_resp)
 }
 
-#[tokio::main]
-pub async fn is_allowed(url: String) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn is_allowed(url: String) -> Result<bool, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
     let mut payload = HashMap::new();
     payload.insert("deviceId", "null");
@@ -49,17 +49,17 @@ pub async fn is_allowed(url: String) -> Result<(), Box<dyn std::error::Error>> {
     } else {
         unknown_error(resp.status());
     }
-    Ok(())
+
+    Ok(true)
 }
 
-#[tokio::main]
 pub async fn punch_record(
     url: String,
     parsed_check_user_resp: CheckUserResp,
     employer_code: &String,
     pin: &String,
     tangerino_basic_token: &String,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<SyncResp, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new();
     let employee_id = &parsed_check_user_resp.funcionario.id.to_string();
@@ -138,16 +138,8 @@ pub async fn punch_record(
         .await?;
 
     if resp.status().is_success() {
-        let parsed_resp: SyncResp = serde_json::from_str(&resp.text().await?)?;
-        if parsed_resp.sucesso == false {
-            Error::new(
-                ErrorKind::InvalidData,
-                parsed_resp
-                    .tipoRetornoRegistroApontamentoEnum
-                    .replace("_", " "),
-            );
-        }
-    // Ok(return parsed_resp);
+
+        // Ok(return parsed_resp);
     } else if resp.status().is_server_error() {
         Error::new(
             ErrorKind::Interrupted,
@@ -156,7 +148,17 @@ pub async fn punch_record(
     } else {
         unknown_error(resp.status());
     }
-    Ok(())
+
+    let parsed_resp: SyncResp = serde_json::from_str(&resp.text().await?)?;
+    if parsed_resp.sucesso == false {
+        Error::new(
+            ErrorKind::InvalidData,
+            parsed_resp
+                .tipoRetornoRegistroApontamentoEnum
+                .replace("_", " "),
+        );
+    }
+    Ok(parsed_resp)
 }
 
 fn unknown_error(status: StatusCode) -> Error {
