@@ -32,7 +32,7 @@ and your configuration directory.
 To have Tangerino punch your card, you just need to call it:
 
 ```shell
-orangino
+$ orangino
 ```
 
 ## Development directions ▶️
