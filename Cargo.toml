@@ -3,6 +3,13 @@ name = "orangino"
 version = "0.1.0"
 authors = ["Marcelo Cardoso <marcelovicentegc@gmail.com>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "A Tangerino plugin for Slack to punch in and out from your CLI, while letting your team know right away."
+readme = "README.md"
+homepage = "https://github.com/marcelovicentegc/orangino"
+repository = "https://github.com/marcelovicentegc/orangino"
+keywords = ["cli", "slack", "tangerino"]
+categories = ["command-line-utilities"]
 
 [lib]
 name = "orangino"
