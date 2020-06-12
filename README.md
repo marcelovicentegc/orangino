@@ -25,7 +25,7 @@ sudo dpkg -i ./orangino_0.1.1_amd64.deb
 
 ## Configuration
 
-Orangino has a [configuration](.orangino.example.toml) file that allows you to change default behaviour.
+Orangino has a [configuration](.orangino.example.toml) file that allows you to set your credentials.
 The file must be named `.orangino.toml`. Currently, Orangino looks for
 this file in your home directory (`/home/marcelo` on Linux, `/Users/Marcelo` on macOs, `C:\Users\Alice` on Windows)
 
