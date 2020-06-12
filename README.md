@@ -1,3 +1,6 @@
+[![Build](https://github.com/marcelovicentegc/orangino/workflows/build/badge.svg)](https://github.com/marcelovicentegc/orangino/actions)
+[![](https://img.shields.io/crates/v/orangino.svg)](https://crates.io/crates/orangino)
+
 <p align="center">
   <img alt="orangino logo" src="assets/orangino.png" height="300" />
   <h3 align="center">ORANGINO</h3>
