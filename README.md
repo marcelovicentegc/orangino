@@ -31,7 +31,7 @@ this file in your home directory (`/home/marcelo` on Linux, `/Users/Marcelo` on 
 
 ## How to use Orangino
 
-To have Tangerino punch your card, you just need to call it:
+To have Orangino punch your card, you just need to call it:
 
 ```shell
 $ orangino
