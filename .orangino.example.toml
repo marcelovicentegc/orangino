@@ -1,8 +1,8 @@
-employer_code = 12345
-pin = 9876
+employer_code = "12345"
+pin = "9876"
 tangerino_basic_token = "Basic xeAxZyEwTOsPZKdlIA=="
 
 slack_channel = "#random"
 slack_api_token = "xoxp-22f3f6aa-1a75-452c-b023-5365db9409ae"
 greetings_message = "Hello world!"
-goodbye_message = "Goodbye world!
+goodbye_message = "Goodbye world!"
