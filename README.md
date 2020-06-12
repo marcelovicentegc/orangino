@@ -31,6 +31,16 @@ To have Tangerino punch your card, you just need to call it:
 $ orangino
 ```
 
+### Demo
+
+#### Punching in
+
+![Punching in](./assets/orangino-in.gif)
+
+#### Punching out
+
+![Punching in](./assets/orangino-out.gif)
+
 ## Development directions ▶️
 
 You will need:
@@ -39,8 +49,7 @@ You will need:
    - Incoming webhooks
    - Bot
      - `chat:write`
-     - `incoming-webhook`
-	 - `pins:read`
+     - `incoming-webhook` - `pins:read`
      - `pins:write`
 2. Python version 3.5 up installed.
 3. Rust's nightly version installed.
