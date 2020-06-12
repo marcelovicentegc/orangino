@@ -8,6 +8,33 @@
 
 Orangino uses the Reqwest crate to interact with the [Tangerino](https://app.tangerino.com.br/) API, while binding with Python to benefit from the [official Slack client](https://github.com/slackapi/python-slackclient) to publish messages to the channel of your choice.
 
+## Installation
+
+### Package Managers
+```console 
+# Arch Linux
+pacman -S orangino
+# Cargo
+cargo install orangino
+# MacOS (Homebrew)
+brew install orangino
+```
+
+## Configuration
+
+Orangino has a [configuration](orangino.example.toml) file that allows you to change default behaviour.
+The file can be named `orangino.toml` or `.oranginorc`. Currently, Orangino looks for
+this file in three different places. The current directory, your home directory,
+and your configuration directory.
+
+## How to use Orangino
+
+To have Tangerino punch your card, you just need to call it:
+
+```shell
+$ orangino
+```
+
 ## Development directions ▶️
 
 You will need:
