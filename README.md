@@ -11,21 +11,17 @@ Orangino uses the Reqwest crate to interact with the [Tangerino](https://app.tan
 ## Installation
 
 ### Package Managers
-```console 
-# Arch Linux
-pacman -S orangino
+
+```console
 # Cargo
 cargo install orangino
-# MacOS (Homebrew)
-brew install orangino
 ```
 
 ## Configuration
 
-Orangino has a [configuration](orangino.example.toml) file that allows you to change default behaviour.
-The file can be named `orangino.toml` or `.oranginorc`. Currently, Orangino looks for
-this file in three different places. The current directory, your home directory,
-and your configuration directory.
+Orangino has a [configuration](.orangino.example.toml) file that allows you to change default behaviour.
+The file must be named `.orangino.toml`. Currently, Orangino looks for
+this file in your home directory (`/home/marcelo` on Linux, `/Users/Marcelo` on macOs, `C:\Users\Alice` on Windows)
 
 ## How to use Orangino
 
@@ -40,25 +36,26 @@ $ orangino
 You will need:
 
 1. A [Slack app](https://api.slack.com/apps) installed on your workspace with the following features and permissions:
-	- Incoming webhooks
-	- Bot
-	    - `chat:write`
-	    - `incoming-webhook`
-            - `pins:read`
-	    - `pins:write`
+   - Incoming webhooks
+   - Bot
+     - `chat:write`
+     - `incoming-webhook`
+	 - `pins:read`
+     - `pins:write`
 2. Python version 3.5 up installed.
 3. Rust's nightly version installed.
-4. A `.env` file with your credentials, following the `.env.example` model:
+4. A `.orangino.toml` file with your credentials, following the `.orangino.example.toml` model on your home path:
 
-```s
-EMPLOYER_CODE=12345
-PIN=9876
-TANGERINO_BASIC_TOKEN="Basic xeAxZyEwTOsPZKdlIA=="
+```toml
+employer_code = "12345"
+pin = "9876"
+tangerino_basic_token = "Basic xeAxZyEwTOsPZKdlIA=="
 
-SLACK_CHANNEL="#random"
-SLACK_API_TOKEN="xoxp-22f3f6aa-1a75-452c-b023-5365db9409ae"
-GREETING_MESSAGE="Hello world!"
-GOODBYE_MESSAGE="Goodbye world!"
+slack_channel = "#random"
+slack_api_token = "xoxp-22f3f6aa-1a75-452c-b023-5365db9409ae"
+greetings_message = "Hello world!"
+goodbye_message = "Goodbye world!"
+
 ```
 
 5. To install the dependencies: `pip install -r requirements.txt && cargo build`
