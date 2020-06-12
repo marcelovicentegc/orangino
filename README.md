@@ -15,6 +15,9 @@ Orangino uses the Reqwest crate to interact with the [Tangerino](https://app.tan
 ```console
 # Cargo
 cargo install orangino
+# Debian
+curl -LJO https://github.com/marcelovicentegc/orangino/releases/download/0.1.1/orangino_0.1.1_amd64.deb
+sudo dpkg -i ./orangino_0.1.1_amd64.deb
 ```
 
 ## Configuration
