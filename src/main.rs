@@ -1,17 +1,18 @@
 mod config;
 mod controllers;
-use config::emojis::{ASTRONAUT, LOCK, PUNCH, TAKING_NOTE};
-use config::keys::get_keys;
+mod utils;
+use config::keys::get_config;
 use console::style;
 use controllers::slack::filter_and_publish;
 use controllers::users::{check_user, is_allowed, punch_record};
+use utils::emojis::{ASTRONAUT, LOCK, PUNCH, TAKING_NOTE};
 
 #[tokio::main]
 async fn start() -> Result<(), Box<dyn std::error::Error>> {
-    let keys = get_keys();
-    let employer_code = &keys[0];
-    let pin = &keys[1];
-    let tangerino_basic_token = &keys[2];
+    let config = get_config();
+    let employer_code = &config.employer_code;
+    let pin = &config.pin;
+    let tangerino_basic_token = &config.tangerino_basic_token;
 
     let check_user_status_url = format!(
         "https://app.tangerino.com.br/Tangerino/ws/fingerprintWS/funcionario/empregador/{}/pin/{}",
@@ -55,7 +56,15 @@ async fn start() -> Result<(), Box<dyn std::error::Error>> {
         style("[4/4]").bold().dim(),
         TAKING_NOTE
     );
-    filter_and_publish(parsed_punch_record_resp).await.unwrap();
+    filter_and_publish(
+        parsed_punch_record_resp,
+        config.slack_api_token,
+        config.slack_channel,
+        config.greetings_message,
+        config.goodbye_message,
+    )
+    .await
+    .unwrap();
 
     Ok(())
 }

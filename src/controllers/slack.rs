@@ -3,6 +3,10 @@ use pyo3::prelude::*;
 
 pub async fn filter_and_publish(
     parsed_sync_resp: SyncResp,
+    slack_api_token: String,
+    slack_channel: String,
+    greeting_message: String,
+    goodbye_message: String,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let gil = Python::acquire_gil();
     let py = gil.python();
@@ -10,6 +14,10 @@ pub async fn filter_and_publish(
     publish_to_slack(
         py,
         parsed_sync_resp.tipoRetornoRegistroApontamentoEnum == "NOVO_PONTO_ABERTO",
+        slack_api_token,
+        slack_channel,
+        greeting_message,
+        goodbye_message,
     )
     .map_err(|e| {
         e.print_and_set_sys_last_vars(py);
@@ -18,27 +26,32 @@ pub async fn filter_and_publish(
     Ok(())
 }
 
-fn publish_to_slack(py: Python, greet: bool) -> PyResult<()> {
+fn publish_to_slack(
+    py: Python,
+    greet: bool,
+    slack_api_token: String,
+    slack_channel: String,
+    greeting_message: String,
+    goodbye_message: String,
+) -> PyResult<()> {
     let slack_client = PyModule::from_code(
         py,
         r#"
 import os
-from dotenv import load_dotenv
 from slack import WebClient
 from slack.errors import SlackApiError
             
-def publish(greet):
-    load_dotenv()
-    client = WebClient(token=os.environ['SLACK_API_TOKEN'])   
+def publish(greet, slack_api_token, slack_channel, greeting_message, goodbye_message):
+    client = WebClient(token=slack_api_token)   
 
     if greet:
-        message = os.environ['GREETING_MESSAGE']
+        message = greeting_message
     else:
-        message = os.environ['GOODBYE_MESSAGE']
+        message = goodbye_message
 
     try:
         response = client.chat_postMessage(
-            channel=os.environ['SLACK_CHANNEL'],
+            channel=slack_channel,
             text=message)
         assert response["message"]["text"] == message
         return f"Published: {response['message']['text']}"
@@ -52,7 +65,18 @@ def publish(greet):
         "slack_client",
     )?;
 
-    let publish_result: String = slack_client.call1("publish", (greet,))?.extract()?;
+    let publish_result: String = slack_client
+        .call1(
+            "publish",
+            (
+                greet,
+                slack_api_token,
+                slack_channel,
+                greeting_message,
+                goodbye_message,
+            ),
+        )?
+        .extract()?;
     println!("{}", publish_result);
 
     Ok(())

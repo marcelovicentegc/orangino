@@ -1,16 +1,31 @@
-extern crate dotenv;
-use dotenv::dotenv;
-use std::env;
+use serde::{Deserialize, Serialize};
+extern crate directories;
+use directories::UserDirs;
+use std::fs;
 
-pub fn get_keys() -> [String; 3] {
-    dotenv().ok();
+#[derive(Serialize, Deserialize)]
+pub struct Config {
+    pub employer_code: String,
+    pub pin: String,
+    pub tangerino_basic_token: String,
+    pub slack_channel: String,
+    pub slack_api_token: String,
+    pub greetings_message: String,
+    pub goodbye_message: String,
+}
 
-    #[allow(non_snake_case)]
-    let EMPLOYER_CODE = env::var("EMPLOYER_CODE").unwrap();
-    #[allow(non_snake_case)]
-    let PIN = env::var("PIN").unwrap();
-    #[allow(non_snake_case)]
-    let TANGERINO_BASIC_TOKEN = env::var("TANGERINO_BASIC_TOKEN").unwrap();
+pub fn get_config() -> Config {
+    let path = UserDirs::new()
+        .unwrap()
+        .home_dir()
+        .join(".orangino.toml")
+        .into_os_string()
+        .into_string()
+        .unwrap();
+    let raw_config =
+        fs::read_to_string(&path).expect("Something went wrong reading the config file");
 
-    return [EMPLOYER_CODE, PIN, TANGERINO_BASIC_TOKEN];
+    let config: Config = toml::from_str(&raw_config).unwrap();
+
+    return config;
 }
