@@ -25,9 +25,21 @@ sudo dpkg -i ./orangino_0.1.1_amd64.deb
 
 ## Configuration
 
+You will need:
+
+1. A [Slack app](https://api.slack.com/apps) installed on your workspace with the following features and permissions and its API token:
+   - Incoming webhooks
+   - Bot
+     - `chat:write`
+     - `incoming-webhook`
+     - `pins:read`
+     - `pins:write`
+2. Python version 3.5 up installed.
+3. Rust's nightly version installed.
+
 Orangino has a [configuration](.orangino.example.toml) file that allows you to set your credentials.
 The file must be named `.orangino.toml`. Currently, Orangino looks for
-this file in your home directory (`/home/marcelo` on Linux, `/Users/Marcelo` on macOs, `C:\Users\Alice` on Windows)
+this file in your home directory (`/home/marcelo` on Linux, `/Users/Marcelo` on macOs, `C:\Users\Marcelo` on Windows)
 
 ## How to use Orangino
 
@@ -55,7 +67,8 @@ You will need:
    - Incoming webhooks
    - Bot
      - `chat:write`
-     - `incoming-webhook` - `pins:read`
+     - `incoming-webhook`
+     - `pins:read`
      - `pins:write`
 2. Python version 3.5 up installed.
 3. Rust's nightly version installed.
