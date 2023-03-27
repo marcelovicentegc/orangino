@@ -23,7 +23,7 @@ path = "src/main.rs"
 
 [dependencies]
 reqwest = { version = "0.10", features = ["json", "native-tls"] }
-tokio = { version = "0.2", features = ["full"] }
+tokio = { version = "1.13", features = ["full"] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 pyo3 = "0.10.1"
